@@ -1,10 +1,13 @@
 import type { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import dayjs from 'dayjs'
+import localizedFormat from 'dayjs/plugin/localizedFormat'
+import 'dayjs/locale/pt-br'
 import { z } from 'zod'
 import nodemailer from 'nodemailer'
 import { prisma } from "../lib/prisma";
 import { getMailClient } from "../lib/mail";
+
 
 //zod => Schema validator
 
@@ -12,6 +15,8 @@ import { getMailClient } from "../lib/mail";
 
 // withTypeProvider<ZodTypeProvider>() => validação retirada do exemplo do plugin https://github.com/turkerdev/fastify-type-provider-zod
 
+dayjs.locale('pt-br');
+dayjs.extend(localizedFormat);
 
 export async function createTrip(app: FastifyInstance) {
     app.withTypeProvider<ZodTypeProvider>().post('/trips', {
@@ -69,6 +74,11 @@ export async function createTrip(app: FastifyInstance) {
         //     }
         // })
 
+        const formattedStartDate = dayjs(starts_at).format('LL')
+        const formattedEndDate = dayjs(ends_at).format('LL')
+
+        const confirmationLink = `http://localhost:3333/trips/${trip.id}/confirm`
+
         const mail = await getMailClient()
 
         const message = await mail.sendMail({
@@ -80,8 +90,18 @@ export async function createTrip(app: FastifyInstance) {
                 name: owner_name,
                 address: owner_email
             },
-            subject: 'Testando envio de e-mail',
-            html: `<p>Teste do envio de e-mail</p>`
+            subject: `Confirme sua viagem para ${destination}`,
+            html: `
+            <div>
+                <p>Você solicitou a criação de uma viagem para <strong>${destination}</strong> nas datas de <strong>${formattedStartDate} até <strong>${formattedEndDate}</strong></p> 
+                <p></p>
+                <p></p>
+                <p>Para confirmar sua viagem, clique no link abaixo</p>
+                <p>
+                    <a href="${confirmationLink}">Confirmar viagem</a>
+                </p>
+            </div>
+            `.trim()
         })
 
         console.log(nodemailer.getTestMessageUrl(message))
