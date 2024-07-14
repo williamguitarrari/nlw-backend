@@ -1,12 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import dayjs from 'dayjs'
-import localizedFormat from 'dayjs/plugin/localizedFormat'
-import 'dayjs/locale/pt-br'
 import { z } from 'zod'
 import nodemailer from 'nodemailer'
 import { prisma } from "../lib/prisma";
 import { getMailClient } from "../lib/mail";
+import { dayjs } from "../lib/dayjs"; // posso mover as importações e os métodos para um arquivo que eu criar e fazer a exportação para usar em mais lugares
 
 
 //zod => Schema validator
@@ -14,9 +12,6 @@ import { getMailClient } from "../lib/mail";
 // fastify-type-provider-zod => plugin de integração do fastify com o zod
 
 // withTypeProvider<ZodTypeProvider>() => validação retirada do exemplo do plugin https://github.com/turkerdev/fastify-type-provider-zod
-
-dayjs.locale('pt-br');
-dayjs.extend(localizedFormat);
 
 export async function createTrip(app: FastifyInstance) {
     app.withTypeProvider<ZodTypeProvider>().post('/trips', {
